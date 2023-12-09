@@ -89,10 +89,10 @@ jobs:
         path: ${{ env.Build_Directory }}
         
     # 创建并发布 GitHub Release
-    - name: Create Release
-      uses: ncipollo/release-action@v1
-      with:
-        artifacts: ${{ env.Build_Directory }}
-        token: ${{ secrets.GITHUB_TOKEN }}
-        tag: ${{ github.ref }}
-        body: "Release at $(date +'%Y-%m-%d %H:%M:%S')"
+    # - name: Create Release
+    #   uses: ncipollo/release-action@v1
+    #   with:
+    #     artifacts: ${{ env.Build_Directory }}
+    #     token: ${{ secrets.GITHUB_TOKEN }}
+    #     tag: ${{ github.ref }}
+    #     body: "Release at $(date +'%Y-%m-%d %H:%M:%S')"
