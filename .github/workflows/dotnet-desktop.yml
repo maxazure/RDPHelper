@@ -55,7 +55,8 @@ jobs:
     runs-on: windows-latest 
                              
     env:
-      Solution_Name: RDPHelper.sln                         
+      Solution_Name: RDPHelper.sln
+      Build_Directory: 'RDPHelper/bin/Release/net8.0-windows/'
     steps:
     - name: Checkout
       uses: actions/checkout@v3
