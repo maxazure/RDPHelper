@@ -32,7 +32,28 @@ namespace RDPHelper
 
             checkBoxFullScreen.Checked = false;
             checkBoxMultiMonitor.Checked = false;
+            this.StartPosition = FormStartPosition.CenterScreen;
+
+            LoadSettings();
         }
+
+        private void SaveSettings()
+        {
+            Properties.Settings.Default["Resolution"] = comboBoxResolution.SelectedItem.ToString();
+            Properties.Settings.Default["ColorDepth"] = comboBoxColorDepth.SelectedItem.ToString();
+            Properties.Settings.Default["FullScreen"] = checkBoxFullScreen.Checked;
+            Properties.Settings.Default["MultiMonitor"] = checkBoxMultiMonitor.Checked;
+            Properties.Settings.Default.Save();
+        }
+
+        private void LoadSettings()
+        {
+            comboBoxResolution.SelectedItem = Properties.Settings.Default["Resolution"];
+            comboBoxColorDepth.SelectedItem = Properties.Settings.Default["ColorDepth"];
+            checkBoxFullScreen.Checked = (bool)Properties.Settings.Default["FullScreen"];
+            checkBoxMultiMonitor.Checked = (bool)Properties.Settings.Default["MultiMonitor"];
+        }
+
 
         private void buttonModify_Click(object sender, EventArgs e)
         {
@@ -102,6 +123,8 @@ namespace RDPHelper
                         }
                     }
                 }
+
+                SaveSettings();
 
                 // 直接启动远程桌面会话
                 try
