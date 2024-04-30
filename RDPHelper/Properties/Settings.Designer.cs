@@ -70,5 +70,29 @@ namespace RDPHelper.Properties {
                 this["MultiMonitor"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool PartialScreen {
+            get {
+                return ((bool)(this["PartialScreen"]));
+            }
+            set {
+                this["PartialScreen"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("0,2")]
+        public string SelectedMonitors {
+            get {
+                return ((string)(this["SelectedMonitors"]));
+            }
+            set {
+                this["SelectedMonitors"] = value;
+            }
+        }
     }
 }

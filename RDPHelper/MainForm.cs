@@ -39,106 +39,152 @@ namespace RDPHelper
 
         private void SaveSettings()
         {
-            Properties.Settings.Default["Resolution"] = comboBoxResolution.SelectedItem.ToString();
-            Properties.Settings.Default["ColorDepth"] = comboBoxColorDepth.SelectedItem.ToString();
-            Properties.Settings.Default["FullScreen"] = checkBoxFullScreen.Checked;
-            Properties.Settings.Default["MultiMonitor"] = checkBoxMultiMonitor.Checked;
-            Properties.Settings.Default.Save();
+            try
+            {
+                Properties.Settings.Default["Resolution"] = comboBoxResolution.SelectedItem.ToString();
+                Properties.Settings.Default["ColorDepth"] = comboBoxColorDepth.SelectedItem.ToString();
+                Properties.Settings.Default["FullScreen"] = checkBoxFullScreen.Checked;
+                Properties.Settings.Default["MultiMonitor"] = checkBoxMultiMonitor.Checked;
+                Properties.Settings.Default["PartialScreen"] = multimonPartial.Checked;
+                Properties.Settings.Default["SelectedMonitors"] = selectedMonitorIds.Text;
+                Properties.Settings.Default.Save();
+            }
+            catch (Exception ex)
+            {
+                // 记录异常信息到app-error.log
+                string logFilePath = "app-error.log";
+                File.AppendAllText(logFilePath, $"Failed to save settings: {ex.Message}\n");
+            }
         }
 
         private void LoadSettings()
         {
-            comboBoxResolution.SelectedItem = Properties.Settings.Default["Resolution"];
-            comboBoxColorDepth.SelectedItem = Properties.Settings.Default["ColorDepth"];
-            checkBoxFullScreen.Checked = (bool)Properties.Settings.Default["FullScreen"];
-            checkBoxMultiMonitor.Checked = (bool)Properties.Settings.Default["MultiMonitor"];
+            try
+            {
+                comboBoxResolution.SelectedItem = Properties.Settings.Default["Resolution"];
+                comboBoxColorDepth.SelectedItem = Properties.Settings.Default["ColorDepth"];
+                checkBoxFullScreen.Checked = (bool)Properties.Settings.Default["FullScreen"];
+                checkBoxMultiMonitor.Checked = (bool)Properties.Settings.Default["MultiMonitor"];
+                multimonPartial.Checked = (bool)Properties.Settings.Default["PartialScreen"];
+                selectedMonitorIds.Text = Properties.Settings.Default["SelectedMonitors"].ToString();
+            }
+            catch (Exception ex)
+            {
+                // 记录异常信息到app-error.log
+                string logFilePath = "app-error.log";
+                File.AppendAllText(logFilePath, $"Failed to load settings: {ex.Message}\n");
+            }
         }
-
 
         private void buttonModify_Click(object sender, EventArgs e)
         {
-            string resolution = comboBoxResolution.SelectedItem.ToString();
-            string colorDepth = comboBoxColorDepth.SelectedItem.ToString();
-            bool fullScreen = checkBoxFullScreen.Checked;
-            bool multiMonitor = checkBoxMultiMonitor.Checked;
-
-            // 获取下载文件夹路径
-            string downloadsPath = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile) + "\\Downloads";
-
-            // 找到最新的 .rdp 文件
-            var rdpFiles = new DirectoryInfo(downloadsPath).GetFiles("*.rdp").OrderByDescending(f => f.LastWriteTime).ToList();
-            var latestRdpFile = rdpFiles.FirstOrDefault();
-
-            if (latestRdpFile != null)
+            try
             {
-                string filePath = latestRdpFile.FullName;
-                string[] resSplit = resolution.Split('x');
-                string desktopWidth = resSplit[0];
-                string desktopHeight = resSplit[1];
+                string resolution = comboBoxResolution.SelectedItem.ToString();
+                string colorDepth = comboBoxColorDepth.SelectedItem.ToString();
+                bool fullScreen = checkBoxFullScreen.Checked;
+                bool partialScreen = multimonPartial.Checked;
+                string selectedMonitors = selectedMonitorIds.ToString();
 
-                // 读取文件内容
-                StringBuilder newContent = new StringBuilder();
-                string[] content = File.ReadAllLines(filePath);
+                bool multiMonitor = checkBoxMultiMonitor.Checked;
 
-                // 修改内容
-                foreach (string line in content)
+                // 获取下载文件夹路径
+                string downloadsPath = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile) + "\\Downloads";
+
+                // 找到最新的 .rdp 文件
+                var rdpFiles = new DirectoryInfo(downloadsPath).GetFiles("*.rdp").OrderByDescending(f => f.LastWriteTime).ToList();
+                var latestRdpFile = rdpFiles.FirstOrDefault();
+
+                if (latestRdpFile != null)
                 {
-         
-                    if (line.StartsWith("use multimon:i:"))
-                        newContent.AppendLine($"use multimon:i:" + (multiMonitor ? "1" : "0"));
-                    else
-                        newContent.AppendLine(line);
-                }
+                    string filePath = latestRdpFile.FullName;
+                    string[] resSplit = resolution.Split('x');
+                    string desktopWidth = resSplit[0];
+                    string desktopHeight = resSplit[1];
 
-                if (!fullScreen)
-                {
-                    newContent.AppendLine($"desktopwidth:i:{desktopWidth}");
-                    newContent.AppendLine($"desktopheight:i:{desktopHeight}");
-                    newContent.AppendLine("disable full window drag:i:1");
+                    // 读取文件内容
+                    StringBuilder newContent = new StringBuilder();
+                    string[] content = File.ReadAllLines(filePath);
 
-                }
-               
-                newContent.AppendLine($"screen mode id:i:" + (fullScreen ? "2" : "1"));
-                newContent.AppendLine($"session bpp:i:{colorDepth}");
-                newContent.AppendLine("audiocapturemode:i:1");
-                newContent.AppendLine("redirectvideo:i:1");
-
-
-                // 将修改后的内容写回文件
-                File.WriteAllText(filePath, newContent.ToString());
-
-
-                // 删除除最新文件之外的所有 .rdp 文件
-                foreach (var file in rdpFiles)
-                {
-                    if (file.FullName != filePath)
+                    // 修改内容
+                    foreach (string line in content)
                     {
-                        try
+                        if (line.StartsWith("use multimon:i:"))
                         {
-                            File.Delete(file.FullName);
+                            if (partialScreen)
+                            {
+                                newContent.AppendLine($"use multimon:i:-1");
+                                newContent.AppendLine($"selectedmonitors:s:" + selectedMonitors);
+                            }
+                            else
+                            {
+                                newContent.AppendLine($"screen mode id:i:2");
+                                newContent.AppendLine($"use multimon:i:" + (multiMonitor ? "1" : "0"));
+                            }
                         }
-                        catch (Exception ex)
+                        else
                         {
-                            MessageBox.Show($"Failed to delete file {file.Name}: {ex.Message}");
+                            newContent.AppendLine(line);
                         }
                     }
-                }
 
-                SaveSettings();
+                    if (!fullScreen)
+                    {
+                        newContent.AppendLine($"desktopwidth:i:{desktopWidth}");
+                        newContent.AppendLine($"desktopheight:i:{desktopHeight}");
+                        newContent.AppendLine("disable full window drag:i:1");
+                        newContent.AppendLine($"screen mode id:i:1");
+                    }
 
-                // 直接启动远程桌面会话
-                try
-                {
-                    Process.Start("mstsc.exe", $"\"{filePath}\"");
+                    newContent.AppendLine($"session bpp:i:{colorDepth}");
+                    newContent.AppendLine("audiocapturemode:i:1");
+                    newContent.AppendLine("redirectvideo:i:1");
+
+                    // 将修改后的内容写回文件
+                    File.WriteAllText(filePath, newContent.ToString());
+
+                    // 删除除最新文件之外的所有 .rdp 文件
+                    foreach (var file in rdpFiles)
+                    {
+                        if (file.FullName != filePath)
+                        {
+                            try
+                            {
+                                File.Delete(file.FullName);
+                            }
+                            catch (Exception ex)
+                            {
+                                // 记录异常信息到app-error.log
+                                string logFilePath = "app-error.log";
+                                File.AppendAllText(logFilePath, $"Failed to delete file {file.Name}: {ex.Message}\n");
+                            }
+                        }
+                    }
+
+                    SaveSettings();
+
+                    // 直接启动远程桌面会话
+                    try
+                    {
+                        Process.Start("mstsc.exe", $"\"{filePath}\"");
+                    }
+                    catch (Exception ex)
+                    {
+                        // 记录异常信息到app-error.log
+                        string logFilePath = "app-error.log";
+                        File.AppendAllText(logFilePath, $"Failed to start remote desktop session: {ex.Message}\n");
+                    }
                 }
-                catch (Exception ex)
+                else
                 {
-                    MessageBox.Show($"Failed to start remote desktop session: {ex.Message}");
+                    MessageBox.Show("No RDP file found in Downloads.");
                 }
             }
-            else
+            catch (Exception ex)
             {
-                MessageBox.Show("No RDP file found in Downloads.");
+                // 记录异常信息到app-error.log
+                string logFilePath = "app-error.log";
+                File.AppendAllText(logFilePath, $"An error occurred: {ex.Message}\n");
             }
         }
     }
