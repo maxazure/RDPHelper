@@ -52,7 +52,7 @@ jobs:
       matrix:
         configuration: [Release]
 
-    runs-on: self-hosted
+    #runs-on: self-hosted
                              
     env:
       Solution_Name: RDPHelper.sln
